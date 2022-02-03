@@ -1,0 +1,25 @@
+---
+- name: Создание нового пользователя с ssh-ключом
+  hosts: test
+  become: true
+  gather_facts: false
+  vars:
+    # Определяем имя пользователя и пароль на удлаенном хосте.
+    username: user1
+    userpass: user1_password
+  tasks:
+    - name: Содание пользователя
+      ansible.builtin.user:
+        name: "{{ username }}"
+        state: present
+        shell: /bin/bash
+        password: "{{ userpass | password_hash('sha512') }}"
+        update_password: on_create
+        groups: "{{ super_group }}"
+        append: yes
+
+    - name: Установка SSH-ключа
+      ansible.posix.authorized_key:
+        user: "{{ username }}"
+        state: present
+        key: "{{ lookup('file', '/home/{{ username }}/.ssh/id_rsa.pub') }}"
