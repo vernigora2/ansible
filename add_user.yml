@@ -1,50 +1,25 @@
 ---
-- name: "install dnsmasq"
-  become: yes
-  package:
-    name: "dnsmasq"
-    state: "present"
+- name: Создание нового пользователя с ssh-ключом
+  hosts: test
+  become: true
+  gather_facts: false
+  vars:
+    # Определяем имя пользователя и пароль на удлаенном хосте.
+    username: user1
+    userpass: user1_password
+  tasks:
+    - name: Содание пользователя
+      ansible.builtin.user:
+        name: "{{ username }}"
+        state: present
+        shell: /bin/bash
+        password: "{{ userpass | password_hash('sha512') }}"
+        update_password: on_create
+        groups: "{{ super_group }}"
+        append: yes
 
-- name: "ensure directories"
-  file:
-    state: directory
-    path: "{{ item }}"
-    owner: "root"
-    group: "root"
-    mode: "u=rwx,g=rx,o=rx"
-  become: yes
-  loop:
-    - "{{ _dnsmasq_additional_configuration_directory }}"
-    - "{{ dnsmasq_tftp_directory }}"
-
-- name: "populate TFTP server when PXE is enabled"
-  include_tasks: "deploy_pxe.yml"
-  when: dnsmasq_enable_pxe
-
-- name: "prepare configuration files"
-  become: yes
-  template:
-    src: "{{ item.src }}"
-    dest: "{{ item.dest }}"
-    owner: "root"
-    group: "root"
-    mode: "u=rw,g=rw,o=r"
-  loop:
-    - src: "dnsmasq.conf.j2"
-      dest: "/etc/dnsmasq.conf"
-    - src: "hosts.j2"
-      dest: "{{ _dnsmasq_hosts_configuration_file_path }}"
-    - src: "aliases.j2"
-      dest: "{{ _dnsmasq_additional_configuration_directory }}/aliases"
-    - src: "static_leases.j2"
-      dest: "{{ _dnsmasq_additional_configuration_directory }}/static_leases"
-  register: _result_dnsmasq_config_files_generation
-
-- name: "ensure that server is up and running"
-  become: yes
-  service:
-    name: "dnsmasq"
-    state: "{{ (_result_dnsmasq_config_files_generation is changed) | ternary('restarted', 'started') }}"
-    enabled: yes
-
-
+    - name: Установка SSH-ключа
+      ansible.posix.authorized_key:
+        user: "{{ username }}"
+        state: present
+        key: "{{ lookup('file', '/home/{{ username }}/.ssh/id_rsa.pub') }}"
