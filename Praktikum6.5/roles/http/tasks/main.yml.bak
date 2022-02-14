@@ -1,0 +1,20 @@
+---
+- name: Install Nginx
+  hosts: database
+  become: yes
+ 
+  tasks:
+  - name: Install Nginx
+    apt: name=nginx update_cache=yes state=latest
+ 
+  - name: Start Nginx and boot
+    service: name=nginx state=started enabled=yes
+
+  - name: "change conf file"
+    ansible.builtin.lineinfile:
+       path: /etc/nginx/sites-available/default
+       insertafter: '# pass PHP scripts to FastCGI server'
+       line: "location ~ [^/]\\.php(/|$) {\n
+        fastcgi_pass    127.0.0.1:9000;\n
+        fastcgi_index   index.php;\n
+        include         /etc/nginx/fastcgi_params;}"

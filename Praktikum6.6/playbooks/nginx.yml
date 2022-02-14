@@ -1,0 +1,12 @@
+---
+- hosts: "serv1"
+  become: yes
+  roles:
+     - users
+     - http
+     
+- hosts: "serv2"
+  become: yes
+  roles:
+     - users
+     - php

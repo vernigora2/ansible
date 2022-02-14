@@ -1,0 +1,31 @@
+---
+- name: "Install php-fpm"
+  hosts: database
+  become: yes
+
+  tasks:
+  - name: "Install php-fpm and deps"
+    apt:
+      pkg:
+        - php7.4
+        - php7.4-fpm
+        - php7.4-cli
+        - php7.4-mbstring
+        - php7.4-mysql
+        - php-xml
+      state: present
+
+  - name: "change php conf file"
+    ansible.builtin.lineinfile:
+      path: /etc/php/7.4/fpm/pool.d/www.conf
+      regexp: '^listen = /run/php/php7.4-fpm.sock'
+      line: listen = 192.168.11.30:9000
+
+  handlers:
+
+  - name: Restart PHP-FPM
+      become: true
+      service:
+       name: php7.1-fpm
+        state: restarted
+
