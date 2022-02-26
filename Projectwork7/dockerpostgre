@@ -1,0 +1,8 @@
+FROM python:3.6-alpine
+RUN apk update && apk add postgresql-dev gcc python3-dev musl-dev
+RUN pip install -U psycopg2
+RUN pip install -U Flask
+RUN pip install -U configparser
+COPY web.py srv/app/
+COPY /conf/web.conf srv/app/conf/
+CMD ["python", "/srv/app/web.py"]
